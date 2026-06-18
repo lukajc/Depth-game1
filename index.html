@@ -8,243 +8,109 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>DEPTH</title>
 <style>
-:root {
-  --green:#00ff88; --green-dim:#00aa55; --green-dark:#003d1a;
-  --red:#ff4444; --navy:#040d1a; --bg:#040d0a;
-  --grid:#0a2e1a; --text-dim:#1a6640;
-}
-* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-html, body {
-  background:var(--navy); font-family:'Courier New',monospace;
-  width:100%; height:100%; overflow:hidden; user-select:none;
-  position:fixed; /* prevents iOS scroll bounce */
-}
-body {
-  display:flex; flex-direction:column; align-items:center; justify-content:center;
-}
-
-/* ── START OVERLAY ── */
-#start-overlay {
-  position:fixed; inset:0; background:rgba(4,13,26,0.97);
-  display:flex; flex-direction:column; align-items:center; justify-content:center;
-  z-index:300; gap:16px; padding:20px;
-}
-#start-overlay h1 { color:var(--green); font-size:clamp(28px,8vw,42px); letter-spacing:10px; font-weight:700; }
-#start-overlay p  { color:var(--text-dim); font-size:clamp(10px,2.5vw,12px); letter-spacing:3px; text-align:center; line-height:2.2; }
-#start-btn {
-  background:var(--green-dark); border:2px solid var(--green); color:var(--green);
-  font-family:'Courier New',monospace; font-size:clamp(12px,3vw,14px); font-weight:700;
-  letter-spacing:4px; padding:14px 36px; border-radius:8px; cursor:pointer;
-  min-height:52px; min-width:160px;
-}
-
-/* ── MAIN CONTAINER ── */
-#game-container {
-  display:flex; flex-direction:column; align-items:center;
-  width:100%; height:100%;
-  padding:env(safe-area-inset-top, 8px) 12px env(safe-area-inset-bottom, 8px) 12px;
-  gap:0;
-  justify-content:space-between;
-  max-width:500px;
-}
-
-/* ── TOP BAR ── */
-#top-bar {
-  display:flex; justify-content:space-between; align-items:center;
-  width:100%; padding:6px 0 4px;
-  flex-shrink:0;
-}
-#title { color:var(--green); font-size:clamp(16px,5vw,20px); letter-spacing:8px; font-weight:700; }
-#best-win { color:#1a5535; font-size:clamp(9px,2vw,10px); letter-spacing:1px; text-align:right; line-height:1.6; }
-#best-win span { color:var(--green-dim); font-weight:700; }
-
-/* ── SOUND TOGGLE ── */
-#sound-toggle {
-  position:fixed; top:max(12px, env(safe-area-inset-top)); right:12px;
-  background:var(--bg); border:1px solid #0d3320; color:var(--text-dim);
-  font-family:'Courier New',monospace; font-size:9px; letter-spacing:2px;
-  padding:5px 8px; border-radius:4px; cursor:pointer; z-index:100;
-  min-height:32px; min-width:52px;
-}
-#sound-toggle.on { color:var(--green); border-color:var(--green-dim); }
-
-/* ── RADAR ── */
-#radar-wrapper {
-  position:relative;
-  width:min(calc(100vw - 24px), calc(100vh - 280px), 420px);
-  aspect-ratio:1;
-  flex-shrink:0;
-  margin:4px auto;
-}
-#radar-canvas { width:100%; height:100%; border-radius:50%; display:block; }
-
-/* ── PHASE OVERLAY ── */
-#phase-overlay {
-  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
-  border-radius:50%; pointer-events:none; opacity:0; transition:opacity 0.25s;
-}
-#phase-overlay.visible { opacity:1; }
-#phase-text { font-size:clamp(10px,3vw,13px); letter-spacing:4px; font-weight:700; text-align:center; color:var(--green); }
-#phase-text.red { color:var(--red); }
-#phase-count { font-size:clamp(26px,8vw,34px); font-weight:700; text-align:center; color:var(--green); margin-top:4px; }
-#phase-count.red { color:var(--red); font-size:clamp(10px,2.5vw,13px); letter-spacing:1px; margin-top:6px; }
-
-/* ── FAKE PLAYERS ── */
-#players-feed { width:100%; min-height:14px; display:flex; flex-direction:column; gap:2px; flex-shrink:0; padding:0 2px; }
-.player-event { font-size:clamp(9px,2.2vw,10px); letter-spacing:0.5px; opacity:0; transition:opacity 0.3s; }
-.player-event.win  { color:var(--green-dim); }
-.player-event.loss { color:#ff5555; }
-.player-event.show { opacity:1; }
-
-/* ── MULTIPLIER ── */
-#multiplier-zone { text-align:center; line-height:1; flex-shrink:0; padding:2px 0; }
-#mult-label { color:var(--text-dim); font-size:clamp(8px,2vw,9px); letter-spacing:3px; margin-bottom:2px; }
-#multiplier {
-  font-size:clamp(48px,14vw,72px); font-weight:700; letter-spacing:2px;
-  font-variant-numeric:tabular-nums; transition:color 0.4s; color:var(--green);
-}
-#multiplier.zone1 { color:#00ff88; }
-#multiplier.zone2 { color:#ccdd00; }
-#multiplier.zone3 { color:#ff8800; }
-#multiplier.zone4 { color:#ff3333; }
-#multiplier.crashed { color:#ff2222; }
-
-/* ── WIN DISPLAY ── */
-#win-display { color:#1a8850; font-size:clamp(11px,2.8vw,13px); letter-spacing:1px; text-align:center; min-height:16px; flex-shrink:0; }
-
-/* ── SESSION STATS ── */
-#session-stats {
-  width:100%; display:flex; justify-content:space-between; align-items:center;
-  background:var(--bg); border:1px solid #0a1e10; border-radius:6px;
-  padding:5px 10px; flex-shrink:0;
-}
-.stat-item { display:flex; flex-direction:column; align-items:center; gap:1px; }
-.stat-label { color:#0d3320; font-size:clamp(7px,1.8vw,8px); letter-spacing:2px; }
-.stat-value { font-size:clamp(10px,2.5vw,12px); font-weight:700; }
-.stat-value.pos { color:#00cc66; }
-.stat-value.neg { color:#ff5555; }
-.stat-value.neu { color:#1a6640; }
-
-/* ── HISTORY ── */
-#history-strip {
-  display:flex; gap:4px; justify-content:center; width:100%; flex-shrink:0;
-}
-.hpill {
-  padding:2px 6px; border-radius:8px; font-size:clamp(9px,2.2vw,10px); font-weight:700;
-  flex:1; text-align:center; max-width:64px;
-}
-.hpill.low  { background:#1a0a0a; color:#ff6666; border:1px solid #2a0808; }
-.hpill.mid  { background:#0a1a0a; color:#00cc66; border:1px solid #0a2a0a; }
-.hpill.high { background:#08083a; color:#7799ff; border:1px solid #0a0a3a; }
-
-/* ── CONTROLS ── */
-#controls { display:flex; gap:8px; width:100%; flex-shrink:0; padding-bottom:4px; }
-#bet-box {
-  flex:1; background:var(--bg); border:1px solid #0d3320; border-radius:8px;
-  padding:8px 10px; display:flex; flex-direction:column; gap:3px;
-}
-#bet-label { color:var(--text-dim); font-size:clamp(7px,1.8vw,8px); letter-spacing:2px; }
-#bet-row   { display:flex; align-items:center; gap:5px; }
-#bet-amount { color:#00cc6a; font-size:clamp(16px,4.5vw,19px); font-weight:700; flex:1; }
-.bbet {
-  background:#0a2010; border:1px solid #0d3320; color:var(--green-dim);
-  font-size:clamp(14px,3.5vw,16px); width:clamp(28px,8vw,32px); height:clamp(28px,8vw,32px);
-  border-radius:4px; cursor:pointer; display:flex; align-items:center; justify-content:center;
-  flex-shrink:0;
-}
-
-#auto-box {
-  display:flex; flex-direction:column; gap:2px;
-  background:var(--bg); border:1px solid #0d3320; border-radius:8px; padding:8px 8px;
-  min-width:80px;
-}
-#auto-label { color:var(--text-dim); font-size:clamp(7px,1.8vw,8px); letter-spacing:1px; }
-#auto-row   { display:flex; align-items:center; gap:3px; }
-#auto-input {
-  width:100%; background:#020808; border:1px solid #0d3320; color:#00cc6a;
-  font-family:'Courier New',monospace; font-size:clamp(13px,3.5vw,15px); font-weight:700;
-  padding:2px 4px; border-radius:3px; text-align:center; min-height:28px;
-}
-#auto-input:focus { outline:none; border-color:var(--green); }
-#auto-unit { color:#1a6640; font-size:11px; flex-shrink:0; }
-
-#surface-btn {
-  flex:1.5; background:var(--green-dark); border:2px solid var(--green); border-radius:8px;
-  color:var(--green); font-family:'Courier New',monospace;
-  font-size:clamp(12px,3.5vw,15px); font-weight:700;
-  letter-spacing:2px; cursor:pointer; display:flex; flex-direction:column;
-  align-items:center; justify-content:center; gap:2px; padding:8px;
-  transition:background 0.1s, transform 0.05s;
-  min-height:clamp(52px,14vw,64px);
-}
-#surface-btn:hover:not(:disabled) { background:#005522; }
-#surface-btn:active:not(:disabled){ transform:scale(0.97); }
-#surface-btn:disabled { opacity:0.28; cursor:not-allowed; border-color:#1a4430; color:#1a4430; }
-#surface-btn .spre { font-size:clamp(7px,2vw,9px); letter-spacing:2px; color:#1aff88; opacity:0.7; }
-
-/* ── STATUS ── */
-#status-bar { color:#0a2010; font-size:clamp(7px,1.8vw,8px); letter-spacing:2px; text-align:center; flex-shrink:0; padding-bottom:2px; }
+:root{--g:#00ff88;--gd:#00aa55;--gk:#003d1a;--r:#ff4444;--nv:#040d1a;--bg:#040d0a;--gr:#0a2e1a;--dm:#1a6640;}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{background:var(--nv);font-family:'Courier New',monospace;width:100%;height:100%;overflow:hidden;user-select:none;position:fixed;}
+body{display:flex;flex-direction:column;align-items:center;justify-content:center;}
+#start-overlay{position:fixed;inset:0;background:rgba(4,13,26,0.97);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:300;gap:16px;padding:20px;}
+#start-overlay h1{color:var(--g);font-size:clamp(28px,8vw,42px);letter-spacing:10px;font-weight:700;}
+#start-overlay p{color:var(--dm);font-size:clamp(10px,2.5vw,12px);letter-spacing:3px;text-align:center;line-height:2.2;}
+#start-btn{background:var(--gk);border:2px solid var(--g);color:var(--g);font-family:'Courier New',monospace;font-size:clamp(12px,3vw,14px);font-weight:700;letter-spacing:4px;padding:14px 36px;border-radius:8px;cursor:pointer;min-height:52px;min-width:160px;}
+#game-container{display:flex;flex-direction:column;align-items:center;width:100%;height:100%;padding:env(safe-area-inset-top,8px) 12px env(safe-area-inset-bottom,8px) 12px;gap:0;justify-content:space-between;max-width:500px;}
+#top-bar{display:flex;justify-content:space-between;align-items:center;width:100%;padding:6px 0 4px;flex-shrink:0;}
+#title{color:var(--g);font-size:clamp(16px,5vw,20px);letter-spacing:8px;font-weight:700;}
+#best-win{color:#1a5535;font-size:clamp(9px,2vw,10px);letter-spacing:1px;text-align:right;line-height:1.6;}
+#best-win span{color:var(--gd);font-weight:700;}
+#sound-toggle{position:fixed;top:max(12px,env(safe-area-inset-top));right:12px;background:var(--bg);border:1px solid #0d3320;color:var(--dm);font-family:'Courier New',monospace;font-size:9px;letter-spacing:2px;padding:5px 8px;border-radius:4px;cursor:pointer;z-index:100;min-height:32px;}
+#sound-toggle.on{color:var(--g);border-color:var(--gd);}
+#radar-wrapper{position:relative;width:min(calc(100vw - 24px),calc(100vh - 280px),420px);aspect-ratio:1;flex-shrink:0;margin:4px auto;}
+#radar-canvas{width:100%;height:100%;border-radius:50%;display:block;}
+#phase-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;border-radius:50%;pointer-events:none;opacity:0;transition:opacity 0.25s;}
+#phase-overlay.visible{opacity:1;}
+#phase-text{font-size:clamp(10px,3vw,13px);letter-spacing:4px;font-weight:700;text-align:center;color:var(--g);}
+#phase-text.red{color:var(--r);}
+#phase-count{font-size:clamp(26px,8vw,34px);font-weight:700;text-align:center;color:var(--g);margin-top:4px;}
+#phase-count.red{color:var(--r);font-size:clamp(10px,2.5vw,13px);letter-spacing:1px;margin-top:6px;}
+#players-feed{width:100%;min-height:14px;display:flex;flex-direction:column;gap:2px;flex-shrink:0;padding:0 2px;}
+.player-event{font-size:clamp(9px,2.2vw,10px);letter-spacing:0.5px;opacity:0;transition:opacity 0.3s;}
+.player-event.win{color:var(--gd);}
+.player-event.loss{color:#ff5555;}
+.player-event.show{opacity:1;}
+#multiplier-zone{text-align:center;line-height:1;flex-shrink:0;padding:2px 0;}
+#mult-label{color:var(--dm);font-size:clamp(8px,2vw,9px);letter-spacing:3px;margin-bottom:2px;}
+#multiplier{font-size:clamp(48px,14vw,72px);font-weight:700;letter-spacing:2px;font-variant-numeric:tabular-nums;transition:color 0.4s;color:var(--g);}
+#multiplier.zone1{color:#00ff88;}
+#multiplier.zone2{color:#ccdd00;}
+#multiplier.zone3{color:#ff8800;}
+#multiplier.zone4{color:#ff3333;}
+#multiplier.crashed{color:#ff2222;}
+#win-display{color:#1a8850;font-size:clamp(11px,2.8vw,13px);letter-spacing:1px;text-align:center;min-height:16px;flex-shrink:0;}
+#session-stats{width:100%;display:flex;justify-content:space-between;align-items:center;background:var(--bg);border:1px solid #0a1e10;border-radius:6px;padding:5px 10px;flex-shrink:0;}
+.stat-item{display:flex;flex-direction:column;align-items:center;gap:1px;}
+.stat-label{color:#0d3320;font-size:clamp(7px,1.8vw,8px);letter-spacing:2px;}
+.stat-value{font-size:clamp(10px,2.5vw,12px);font-weight:700;}
+.stat-value.pos{color:#00cc66;}
+.stat-value.neg{color:#ff5555;}
+.stat-value.neu{color:#1a6640;}
+#history-strip{display:flex;gap:4px;justify-content:center;width:100%;flex-shrink:0;}
+.hpill{padding:2px 6px;border-radius:8px;font-size:clamp(9px,2.2vw,10px);font-weight:700;flex:1;text-align:center;max-width:64px;}
+.hpill.low{background:#1a0a0a;color:#ff6666;border:1px solid #2a0808;}
+.hpill.mid{background:#0a1a0a;color:#00cc66;border:1px solid #0a2a0a;}
+.hpill.high{background:#08083a;color:#7799ff;border:1px solid #0a0a3a;}
+#controls{display:flex;gap:8px;width:100%;flex-shrink:0;padding-bottom:4px;}
+#bet-box{flex:1;background:var(--bg);border:1px solid #0d3320;border-radius:8px;padding:8px 10px;display:flex;flex-direction:column;gap:3px;}
+#bet-label{color:var(--dm);font-size:clamp(7px,1.8vw,8px);letter-spacing:2px;}
+#bet-row{display:flex;align-items:center;gap:5px;}
+#bet-amount{color:#00cc6a;font-size:clamp(16px,4.5vw,19px);font-weight:700;flex:1;}
+.bbet{background:#0a2010;border:1px solid #0d3320;color:var(--gd);font-size:clamp(14px,3.5vw,16px);width:clamp(28px,8vw,32px);height:clamp(28px,8vw,32px);border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+#auto-box{display:flex;flex-direction:column;gap:2px;background:var(--bg);border:1px solid #0d3320;border-radius:8px;padding:8px 8px;min-width:75px;}
+#auto-label{color:var(--dm);font-size:clamp(7px,1.8vw,8px);letter-spacing:1px;}
+#auto-row{display:flex;align-items:center;gap:3px;}
+#auto-input{width:100%;background:#020808;border:1px solid #0d3320;color:#00cc6a;font-family:'Courier New',monospace;font-size:clamp(13px,3.5vw,15px);font-weight:700;padding:2px 4px;border-radius:3px;text-align:center;min-height:28px;}
+#auto-input:focus{outline:none;border-color:var(--g);}
+#auto-unit{color:#1a6640;font-size:11px;flex-shrink:0;}
+#surface-btn{flex:1.5;background:var(--gk);border:2px solid var(--g);border-radius:8px;color:var(--g);font-family:'Courier New',monospace;font-size:clamp(12px,3.5vw,15px);font-weight:700;letter-spacing:2px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:8px;transition:background 0.1s,transform 0.05s;min-height:clamp(52px,14vw,64px);}
+#surface-btn:hover:not(:disabled){background:#005522;}
+#surface-btn:active:not(:disabled){transform:scale(0.97);}
+#surface-btn:disabled{opacity:0.28;cursor:not-allowed;border-color:#1a4430;color:#1a4430;}
+#surface-btn .spre{font-size:clamp(7px,2vw,9px);letter-spacing:2px;color:#1aff88;opacity:0.7;}
+#status-bar{color:#0a2010;font-size:clamp(7px,1.8vw,8px);letter-spacing:2px;text-align:center;flex-shrink:0;padding-bottom:2px;}
 </style>
 </head>
 <body>
-
 <div id="start-overlay">
   <h1>DEPTH</h1>
   <p>SUBMARINE RADAR<br>CASH OUT BEFORE THEY FIND YOU</p>
   <button id="start-btn">▼ DIVE IN</button>
 </div>
-
 <button id="sound-toggle" class="on">♪ ON</button>
-
 <div id="game-container">
   <div id="top-bar">
     <div id="title">DEPTH</div>
     <div id="best-win">BEST SESSION<br>★ <span id="best-val">—</span></div>
   </div>
-
   <div id="radar-wrapper">
     <canvas id="radar-canvas"></canvas>
     <div id="phase-overlay">
-      <div>
-        <div id="phase-text"></div>
-        <div id="phase-count"></div>
-      </div>
+      <div><div id="phase-text"></div><div id="phase-count"></div></div>
     </div>
   </div>
-
   <div id="players-feed">
     <div class="player-event" id="pev0"></div>
     <div class="player-event" id="pev1"></div>
   </div>
-
   <div id="multiplier-zone">
     <div id="mult-label">MULTIPLIER</div>
     <div id="multiplier" class="zone1">1.00×</div>
   </div>
-
   <div id="win-display">BET $10.00  →  WIN $10.00</div>
-
   <div id="session-stats">
-    <div class="stat-item">
-      <div class="stat-label">WON</div>
-      <div class="stat-value pos" id="stat-won">$0.00</div>
-    </div>
-    <div class="stat-item">
-      <div class="stat-label">LOST</div>
-      <div class="stat-value neg" id="stat-lost">$0.00</div>
-    </div>
-    <div class="stat-item">
-      <div class="stat-label">NET</div>
-      <div class="stat-value neu" id="stat-net">$0.00</div>
-    </div>
-    <div class="stat-item">
-      <div class="stat-label">ROUNDS</div>
-      <div class="stat-value neu" id="stat-rounds">0</div>
-    </div>
+    <div class="stat-item"><div class="stat-label">WON</div><div class="stat-value pos" id="stat-won">$0.00</div></div>
+    <div class="stat-item"><div class="stat-label">LOST</div><div class="stat-value neg" id="stat-lost">$0.00</div></div>
+    <div class="stat-item"><div class="stat-label">NET</div><div class="stat-value neu" id="stat-net">$0.00</div></div>
+    <div class="stat-item"><div class="stat-label">ROUNDS</div><div class="stat-value neu" id="stat-rounds">0</div></div>
   </div>
-
   <div id="history-strip"></div>
-
   <div id="controls">
     <div id="bet-box">
       <div id="bet-label">BET</div>
@@ -266,63 +132,49 @@ body {
       <span>▲ SURFACE</span>
     </button>
   </div>
-
   <div id="status-bar">● CONNECTED &nbsp;|&nbsp; ROUND <span id="round-num">1</span></div>
 </div>
-
 <script>
 // ══════════════════════════════════════════
 // AUDIO
 // ══════════════════════════════════════════
-let AC=null, soundOn=true, hbInterval=null, hbBPM=58;
-
-function ensureAC(){
-  if(!AC) AC=new(window.AudioContext||window.webkitAudioContext)();
-  if(AC.state==='suspended') AC.resume();
-}
+let AC=null,soundOn=true,hbInterval=null,hbBPM=58;
+function ensureAC(){if(!AC)AC=new(window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume();}
 function heartbeat(){
-  if(!AC||!soundOn) return;
-  const t=AC.currentTime;
+  if(!AC||!soundOn)return;const t=AC.currentTime;
   const lo=AC.createOscillator(),lg=AC.createGain(),lf=AC.createBiquadFilter();
   lf.type='lowpass';lf.frequency.value=130;lo.type='sine';
   lo.frequency.setValueAtTime(58,t);lo.frequency.exponentialRampToValueAtTime(28,t+.14);
   lg.gain.setValueAtTime(0,t);lg.gain.linearRampToValueAtTime(.75,t+.02);lg.gain.exponentialRampToValueAtTime(.001,t+.24);
   lo.connect(lf);lf.connect(lg);lg.connect(AC.destination);lo.start(t);lo.stop(t+.26);
-  const do2=AC.createOscillator(),dg=AC.createGain(),df=AC.createBiquadFilter();
-  df.type='lowpass';df.frequency.value=110;do2.type='sine';
-  do2.frequency.setValueAtTime(68,t+.20);do2.frequency.exponentialRampToValueAtTime(34,t+.34);
-  dg.gain.setValueAtTime(0,t+.20);dg.gain.linearRampToValueAtTime(.48,t+.22);dg.gain.exponentialRampToValueAtTime(.001,t+.40);
-  do2.connect(df);df.connect(dg);dg.connect(AC.destination);do2.start(t+.20);do2.stop(t+.42);
+  const d2=AC.createOscillator(),dg=AC.createGain(),df=AC.createBiquadFilter();
+  df.type='lowpass';df.frequency.value=110;d2.type='sine';
+  d2.frequency.setValueAtTime(68,t+.2);d2.frequency.exponentialRampToValueAtTime(34,t+.34);
+  dg.gain.setValueAtTime(0,t+.2);dg.gain.linearRampToValueAtTime(.48,t+.22);dg.gain.exponentialRampToValueAtTime(.001,t+.4);
+  d2.connect(df);df.connect(dg);dg.connect(AC.destination);d2.start(t+.2);d2.stop(t+.42);
 }
-function startHB(bpm){
-  stopHB();hbBPM=bpm;if(!soundOn||!AC)return;
-  heartbeat();hbInterval=setInterval(()=>heartbeat(),60000/hbBPM);
-}
-function updateHB(bpm){
-  bpm=Math.round(bpm);if(bpm===hbBPM)return;hbBPM=bpm;stopHB();
-  if(soundOn&&AC&&phase==='active'){heartbeat();hbInterval=setInterval(()=>heartbeat(),60000/hbBPM);}
-}
+function startHB(bpm){stopHB();hbBPM=bpm;if(!soundOn||!AC)return;heartbeat();hbInterval=setInterval(()=>heartbeat(),60000/hbBPM);}
+function updateHB(bpm){bpm=Math.round(bpm);if(bpm===hbBPM)return;hbBPM=bpm;stopHB();if(soundOn&&AC&&phase==='active'){heartbeat();hbInterval=setInterval(()=>heartbeat(),60000/hbBPM);}}
 function stopHB(){clearInterval(hbInterval);hbInterval=null;}
-
 function ping(){
-  if(!AC||!soundOn)return;
-  const t=AC.currentTime,o=AC.createOscillator(),g=AC.createGain(),f=AC.createBiquadFilter();
+  if(!AC||!soundOn)return;const t=AC.currentTime;
+  const o=AC.createOscillator(),g=AC.createGain(),f=AC.createBiquadFilter();
   f.type='bandpass';f.frequency.value=900;f.Q.value=9;o.type='sine';
   o.frequency.setValueAtTime(900,t);o.frequency.exponentialRampToValueAtTime(440,t+.5);
   g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.15,t+.02);g.gain.exponentialRampToValueAtTime(.001,t+.6);
   o.connect(f);f.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+.65);
 }
 function creak(){
-  if(!AC||!soundOn)return;
-  const t=AC.currentTime,o=AC.createOscillator(),g=AC.createGain(),f=AC.createBiquadFilter();
+  if(!AC||!soundOn)return;const t=AC.currentTime;
+  const o=AC.createOscillator(),g=AC.createGain(),f=AC.createBiquadFilter();
   f.type='bandpass';f.frequency.value=210;f.Q.value=3;o.type='sawtooth';
   o.frequency.setValueAtTime(190,t);o.frequency.linearRampToValueAtTime(85,t+.35);
   g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.10,t+.04);g.gain.exponentialRampToValueAtTime(.001,t+.45);
   o.connect(f);f.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+.5);
 }
 function explosion(){
-  if(!AC||!soundOn)return;
-  const t=AC.currentTime,sr=AC.sampleRate,buf=AC.createBuffer(1,sr*1.8,sr),d=buf.getChannelData(0);
+  if(!AC||!soundOn)return;const t=AC.currentTime,sr=AC.sampleRate;
+  const buf=AC.createBuffer(1,sr*1.8,sr),d=buf.getChannelData(0);
   for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
   const ns=AC.createBufferSource();ns.buffer=buf;
   const ng=AC.createGain(),nf=AC.createBiquadFilter();
@@ -335,8 +187,7 @@ function explosion(){
   bo.connect(bg);bg.connect(AC.destination);bo.start(t);bo.stop(t+1.2);
 }
 function splash(){
-  if(!AC||!soundOn)return;
-  const t=AC.currentTime;
+  if(!AC||!soundOn)return;const t=AC.currentTime;
   for(let i=0;i<4;i++){
     const o=AC.createOscillator(),g=AC.createGain();
     o.type='sine';o.frequency.setValueAtTime(420+i*130,t+i*.07);o.frequency.exponentialRampToValueAtTime(200,t+i*.07+.16);
@@ -348,29 +199,18 @@ function splash(){
 // ══════════════════════════════════════════
 // FAKE PLAYERS
 // ══════════════════════════════════════════
-const NAMES=['Alex K.','Giorgi M.','Nino T.','David L.','Mariam S.','Lasha B.',
-             'Ana G.','Zura K.','Tamta R.','Irakli P.','Sophie D.','Nika V.',
-             'Elene C.','Tornike J.','Keti N.','Beka O.','Salome A.','Gigi F.'];
-let feedSlot=0, fakeTimer=null;
-
-function fakeCashout(m){
-  const name=NAMES[Math.floor(Math.random()*NAMES.length)];
-  const b=[1,2,5,10,20,50][Math.floor(Math.random()*6)];
-  showFeed(`▲ ${name} cashed out ${m.toFixed(2)}×  +$${(b*m).toFixed(2)}`,'win');
-}
-function fakeLoss(){
-  showFeed(`✗ ${NAMES[Math.floor(Math.random()*NAMES.length)]} lost their bet`,'loss');
-}
+const NAMES=['Alex K.','Giorgi M.','Nino T.','David L.','Mariam S.','Lasha B.','Ana G.','Zura K.','Tamta R.','Irakli P.','Sophie D.','Nika V.','Elene C.','Tornike J.','Keti N.','Beka O.','Salome A.','Gigi F.'];
+let feedSlot=0,fakeTimer=null;
+function fakeCashout(m){const nm=NAMES[Math.floor(Math.random()*NAMES.length)],b=[1,2,5,10,20,50][Math.floor(Math.random()*6)];showFeed(`▲ ${nm} cashed out ${m.toFixed(2)}×  +$${(b*m).toFixed(2)}`,'win');}
+function fakeLoss(){showFeed(`✗ ${NAMES[Math.floor(Math.random()*NAMES.length)]} lost their bet`,'loss');}
 function showFeed(msg,type){
-  const el=document.getElementById('pev'+feedSlot);
-  feedSlot=(feedSlot+1)%2;
-  el.textContent=msg; el.className='player-event '+type;
+  const el=document.getElementById('pev'+feedSlot);feedSlot=(feedSlot+1)%2;
+  el.textContent=msg;el.className='player-event '+type;
   requestAnimationFrame(()=>el.classList.add('show'));
   setTimeout(()=>el.classList.remove('show'),3000);
 }
 function scheduleFake(){
-  clearTimeout(fakeTimer);
-  if(phase!=='active')return;
+  clearTimeout(fakeTimer);if(phase!=='active')return;
   fakeTimer=setTimeout(()=>{
     if(phase!=='active')return;
     const fm=mult*(0.85+Math.random()*.4);
@@ -382,22 +222,14 @@ function scheduleFake(){
 // ══════════════════════════════════════════
 // GAME STATE
 // ══════════════════════════════════════════
-const cv=document.getElementById('radar-canvas');
-const rc=cv.getContext('2d');
-const multEl=document.getElementById('multiplier');
-const winEl=document.getElementById('win-display');
-const surfBtn=document.getElementById('surface-btn');
-const povEl=document.getElementById('phase-overlay');
-const ptEl=document.getElementById('phase-text');
-const pcEl=document.getElementById('phase-count');
-const rnEl=document.getElementById('round-num');
-const betEl=document.getElementById('bet-amount');
-const hStrip=document.getElementById('history-strip');
-const bestEl=document.getElementById('best-val');
-const wonEl=document.getElementById('stat-won');
-const lostEl=document.getElementById('stat-lost');
-const netEl=document.getElementById('stat-net');
-const rndEl=document.getElementById('stat-rounds');
+const cv=document.getElementById('radar-canvas'),rc=cv.getContext('2d');
+const multEl=document.getElementById('multiplier'),winEl=document.getElementById('win-display');
+const surfBtn=document.getElementById('surface-btn'),povEl=document.getElementById('phase-overlay');
+const ptEl=document.getElementById('phase-text'),pcEl=document.getElementById('phase-count');
+const rnEl=document.getElementById('round-num'),betEl=document.getElementById('bet-amount');
+const hStrip=document.getElementById('history-strip'),bestEl=document.getElementById('best-val');
+const wonEl=document.getElementById('stat-won'),lostEl=document.getElementById('stat-lost');
+const netEl=document.getElementById('stat-net'),rndEl=document.getElementById('stat-rounds');
 
 const BETS=[1,2,5,10,20,50,100,200,500];
 let bIdx=3,bet=10,rNum=1,phase='betting';
@@ -405,78 +237,249 @@ let mult=1,crashPt=1,sweepA=-Math.PI/2;
 let t0=0,bcdTimer=null,history=[],cashedOut=false,speedMult=1;
 let sTotalWon=0,sTotalLost=0,sRounds=0,sBest=0;
 
-// ── ENEMY STATE ──
-// behaviorType: 'hunt' | 'flee' | 'stalk'
-// hunt  (30%): approaches center over next 2-3 sweeps — "it found me"
-// flee  (40%): appears heading toward center, next sweep jumps far away — "I tricked it"
-// stalk (30%): silently creeps closer each sweep, small increments — "silent hunter"
-let eAngle=Math.random()*Math.PI*2, eDist=0.75;
-let eVisible=false, eTimer=0, ePulse=0;
+// ══════════════════════════════════════════
+// ZONE SYSTEM
+// 3 = FAR   dist: 0.65–0.92
+// 2 = MID   dist: 0.35–0.65
+// 1 = NEAR  dist: 0.05–0.35
+// ══════════════════════════════════════════
+const ZONE={
+  3:{min:0.65,max:0.92},
+  2:{min:0.35,max:0.65},
+  1:{min:0.05,max:0.35}
+};
+function randomDistInZone(z){return ZONE[z].min+Math.random()*(ZONE[z].max-ZONE[z].min);}
+function getZone(dist){if(dist>=ZONE[3].min)return 3;if(dist>=ZONE[2].min)return 2;return 1;}
+
+// Enemy state
+let eAngle=0,eDist=0.8,eZone=3;
+let eVisible=false,eTimer=0,ePulse=0;
 let detected=false;
-let eBehavior='stalk';      // current behavior type
-let eHuntSweeps=0;          // countdown for hunt sweeps
-let isCrash=false, crashFlash=0;
+// Behavior: 'hunt'|'stalk'|'flee'
+let eBehav='stalk';
+let eFleeCount=0;        // flee uses max per round
+let eSweepsSinceZone=0; // sweeps spent in current zone
+let isCrash=false,crashFlash=0;
 
-function resize(){
-  const w=document.getElementById('radar-wrapper').offsetWidth;
-  cv.width=w; cv.height=w;
-}
-resize();
-window.addEventListener('resize',()=>{ resize(); });
+// Max flee events per round — determined psychologically:
+// Early round: 1-2 allowed (relief is meaningful)
+// Mid round: maybe 1 more
+// We cap globally at 3 per round — enough to create "I escaped" moments
+// without cheapening them
+let maxFlee=0;
 
-function genCrash(){
-  if(Math.random()<.04)return 1.00;
-  return Math.max(1.01,1/(1-Math.random()*.96));
-}
-function getBPM(){
-  if(mult<3)return 58;
-  return Math.floor(58+Math.min((mult-3)/12,1)*62);
-}
-function getSweepSpeed(){
-  if(mult<3)return 0.020;
-  return 0.020+Math.min((mult-3)/12,1)*0.052;
-}
-function getMultColor(){
-  if(mult<3) return['zone1','0,255,136'];
-  if(mult<7) return['zone2','200,220,0'];
-  if(mult<15)return['zone3','255,136,0'];
-  return['zone4','255,50,50'];
-}
-function getRadarDark(){ return Math.min((mult-1)/19,1); }
-function calcMult(el){ return Math.max(1.00,Math.pow(Math.E,el*0.046*speedMult)); }
+function resize(){const w=document.getElementById('radar-wrapper').offsetWidth;cv.width=w;cv.height=w;}
+resize();window.addEventListener('resize',()=>{resize();});
+
+function genCrash(){if(Math.random()<.04)return 1.00;return Math.max(1.01,1/(1-Math.random()*.96));}
+function getBPM(){if(mult<3)return 58;return Math.floor(58+Math.min((mult-3)/12,1)*62);}
+function getSweepSpeed(){if(mult<3)return 0.020;return 0.020+Math.min((mult-3)/12,1)*0.052;}
+function getMultColor(){if(mult<3)return['zone1','0,255,136'];if(mult<7)return['zone2','200,220,0'];if(mult<15)return['zone3','255,136,0'];return['zone4','255,50,50'];}
+function getRadarDark(){return Math.min((mult-1)/19,1);}
+function calcMult(el){return Math.max(1.00,Math.pow(Math.E,el*0.046*speedMult));}
 
 function updateStats(won,lost){
-  sTotalWon+=won; sTotalLost+=lost; sRounds++;
+  sTotalWon+=won;sTotalLost+=lost;sRounds++;
   const net=sTotalWon-sTotalLost;
-  wonEl.textContent='$'+sTotalWon.toFixed(2);
-  lostEl.textContent='$'+sTotalLost.toFixed(2);
+  wonEl.textContent='$'+sTotalWon.toFixed(2);lostEl.textContent='$'+sTotalLost.toFixed(2);
   netEl.textContent=(net>=0?'+':'')+net.toFixed(2);
   netEl.className='stat-value '+(net>0?'pos':net<0?'neg':'neu');
   rndEl.textContent=sRounds;
 }
 
-// ── PHASES ──
+// ══════════════════════════════════════════
+// ENEMY BEHAVIOR ENGINE
+// ══════════════════════════════════════════
+
+// Progress 0→1 over the round (based on multiplier)
+function getProgress(){return Math.min((mult-1)/15,1);}
+
+// Decide next behavior based on current state + psychology
+function decideBehavior(){
+  const prog=getProgress();
+  const curZone=getZone(eDist);
+
+  // Near crash — force near-center appearance (override)
+  // Handled separately in updateEnemy
+
+  // Flee: rare, psychologically meaningful
+  // Allow flee only if: not in zone 1 already, flee count not maxed
+  // Probability decreases as game progresses (less chance of escape late)
+  const fleeChance=eFleeCount<maxFlee?Math.max(0,(0.30-prog*0.20)):0;
+
+  // Hunt: more likely as progress increases and currently in zone 2-3
+  const huntChance=curZone>=2?0.30+prog*0.25:0.15+prog*0.15;
+
+  // Stalk: always possible, fills remaining probability
+  const r=Math.random();
+  if(r<fleeChance){eFleeCount++;return'flee';}
+  if(r<fleeChance+huntChance)return'hunt';
+  return'stalk';
+}
+
+// Calculate next dot position on sweep detection
+// Returns {angle, dist, zone}
+function nextPosition(){
+  const prog=getProgress();
+  const curZone=getZone(eDist);
+  eSweepsSinceZone++;
+
+  switch(eBehav){
+
+    case 'hunt':{
+      // Deliberately closes in — moves 1 zone closer most of the time
+      // Occasionally stays in same zone (circling, stalking)
+      // Very rarely retreats 1 zone (feint)
+      let targetZone;
+      const r=Math.random();
+      if(curZone===3){
+        // From far: 70% go to mid, 25% stay far, 5% stay far (circling)
+        targetZone=r<0.70?2:3;
+      } else if(curZone===2){
+        // From mid: 65% go to near, 25% stay mid, 10% retreat to far
+        targetZone=r<0.65?1:r<0.90?2:3;
+      } else {
+        // Already near: 80% stay near (closing in), 20% go mid (feint)
+        targetZone=r<0.80?1:2;
+      }
+      // After 2-3 hunt sweeps switch behavior for variety
+      if(eSweepsSinceZone>=2+Math.floor(Math.random()*2)){
+        eBehav=decideBehavior();eSweepsSinceZone=0;
+      }
+      const newDist=randomDistInZone(targetZone);
+      const angleWander=(Math.random()-0.5)*(targetZone===1?0.5:0.8);
+      return{angle:eAngle+angleWander,dist:newDist,zone:targetZone};
+    }
+
+    case 'flee':{
+      // Two-phase:
+      // Phase A (first flee sweep): appear alarmingly close (zone 1 or near zone 2)
+      // Phase B (next sweep): jump back to zone 3 — relief!
+      if(eSweepsSinceZone===1){
+        // Phase A — alarm
+        creak();
+        const alarmZone=Math.random()<0.6?1:2;
+        const alarmDist=alarmZone===1?0.08+Math.random()*0.18:0.36+Math.random()*0.15;
+        return{angle:eAngle+(Math.random()-0.5)*0.5,dist:alarmDist,zone:alarmZone};
+      } else {
+        // Phase B — escape to far zone, pick new behavior
+        eBehav=decideBehavior();eSweepsSinceZone=0;
+        const escapeAngle=eAngle+Math.PI*(0.5+Math.random()*1.0);
+        return{angle:escapeAngle,dist:randomDistInZone(3),zone:3};
+      }
+    }
+
+    case 'stalk':{
+      // Slow, patient approach — small steps
+      // Mostly stays in same zone or moves 1 zone closer
+      // Can occasionally retreat 1 zone (makes it unpredictable)
+      const r=Math.random();
+      let targetZone;
+      if(curZone===3){
+        // 40% go to mid, 50% stay far, 10% stay far (wider wander)
+        targetZone=r<0.40?2:3;
+      } else if(curZone===2){
+        // 45% go to near, 40% stay mid, 15% retreat to far
+        targetZone=r<0.45?1:r<0.85?2:3;
+      } else {
+        // 60% stay near, 30% go mid, 10% stay near (very close)
+        targetZone=r<0.60?1:r<0.90?2:1;
+      }
+      // Wide angle wander — stalk circles the sub
+      const wander=(Math.random()-0.5)*1.2;
+      // Occasionally switch to hunt after long stalk
+      if(eSweepsSinceZone>=4+Math.floor(Math.random()*3)){
+        eBehav=decideBehavior();eSweepsSinceZone=0;
+      }
+      return{angle:eAngle+wander,dist:randomDistInZone(targetZone),zone:targetZone};
+    }
+  }
+}
+
+function initEnemy(){
+  // Always start in zone 3
+  eAngle=Math.random()*Math.PI*2;
+  eDist=randomDistInZone(3);
+  eZone=3;
+  eVisible=false;eTimer=0;detected=false;
+  eBehav='stalk';eFleeCount=0;eSweepsSinceZone=0;
+  // Max flee for this round: 1-3, weighted toward lower
+  maxFlee=Math.random()<0.5?1:Math.random()<0.7?2:3;
+}
+
+function updateEnemy(){
+  ePulse+=.07;
+
+  // Crash approach: drift slowly toward near-center
+  if(isCrash){
+    const tx=Math.cos(eAngle+.4)*0.05,ty=Math.sin(eAngle+.4)*0.05;
+    const ex=Math.cos(eAngle)*eDist,ey=Math.sin(eAngle)*eDist;
+    const nx=ex+(tx-ex)*.012,ny=ey+(ty-ey)*.012;
+    eDist=Math.sqrt(nx*nx+ny*ny);eAngle=Math.atan2(ny,nx);
+    eVisible=true;eTimer=99;return;
+  }
+  if(phase!=='active')return;
+
+  const prog=getProgress();
+
+  // Detect sweep crossing enemy angle
+  const eN=((eAngle%(Math.PI*2))+Math.PI*2)%(Math.PI*2);
+  const sN=((sweepA%(Math.PI*2))+Math.PI*2)%(Math.PI*2);
+  const dA=Math.min(Math.abs(sN-eN),Math.PI*2-Math.abs(sN-eN));
+
+  if(dA<0.14&&!detected){
+    detected=true;
+    // Visibility duration: longer when closer
+    const zoneVis=getZone(eDist);
+    eVisible=true;
+    eTimer=zoneVis===1?40+Math.floor(prog*20):zoneVis===2?28+Math.floor(prog*16):18+Math.floor(prog*12);
+    ping();
+
+    // Near-miss override: crash is imminent
+    const sweepPeriod=(Math.PI*2)/getSweepSpeed()/60;
+    const timeLeft=(crashPt-mult)/(mult*0.046*speedMult+0.001);
+    if(timeLeft<sweepPeriod*2.2&&crashPt>1.05){
+      // Force near appearance — final warning
+      eAngle=eAngle+(Math.random()-.5)*.5;
+      eDist=0.06+Math.random()*0.14;
+      eZone=1;
+      creak();
+    } else {
+      // Normal: apply behavior engine
+      const next=nextPosition();
+      eAngle=next.angle;
+      eDist=next.dist;
+      eZone=next.zone;
+    }
+  } else if(dA>0.5){
+    detected=false;
+  }
+
+  if(eTimer>0){eTimer--;if(eTimer<=0)eVisible=false;}
+}
+
+// ══════════════════════════════════════════
+// PHASES
+// ══════════════════════════════════════════
 function startBetting(){
-  phase='betting'; mult=1; cashedOut=false;
-  sweepA=-Math.PI/2; crashFlash=0; isCrash=false;
-  eAngle=Math.random()*Math.PI*2; eDist=.68+Math.random()*.22;
-  eVisible=false; eTimer=0; detected=false;
-  eBehavior=pickBehavior(); eHuntSweeps=0;
+  phase='betting';mult=1;cashedOut=false;
+  sweepA=-Math.PI/2;crashFlash=0;isCrash=false;
+  initEnemy();
   speedMult=.7+Math.random()*.8;
-  stopHB(); clearTimeout(fakeTimer);
+  stopHB();clearTimeout(fakeTimer);
   surfBtn.disabled=true;
-  multEl.className='zone1'; multEl.textContent='1.00×';
+  multEl.className='zone1';multEl.textContent='1.00×';
   updateWinDisp();
-  ptEl.className=''; ptEl.textContent='PLACING BETS';
-  pcEl.className=''; pcEl.textContent='7';
+  ptEl.className='';ptEl.textContent='PLACING BETS';
+  pcEl.className='';pcEl.textContent='7';
   povEl.className='visible';
   let cd=7;
-  bcdTimer=setInterval(()=>{ cd--; pcEl.textContent=cd; if(cd<=0){clearInterval(bcdTimer);startActive();} },1000);
+  bcdTimer=setInterval(()=>{cd--;pcEl.textContent=cd;if(cd<=0){clearInterval(bcdTimer);startActive();}},1000);
 }
 
 function startActive(){
-  phase='active'; crashPt=genCrash(); t0=performance.now();
-  povEl.className=''; surfBtn.disabled=false;
+  phase='active';crashPt=genCrash();t0=performance.now();
+  povEl.className='';surfBtn.disabled=false;
   if(soundOn&&AC)startHB(58);
   scheduleFake();
   requestAnimationFrame(loop);
@@ -485,39 +488,37 @@ function startActive(){
 function doSurface(){
   if(phase!=='active'||cashedOut)return;
   cashedOut=true;
-  const win=bet*mult, cm=mult;
-  splash(); surfBtn.disabled=true;
+  const win=bet*mult,cm=mult;
+  splash();surfBtn.disabled=true;
   winEl.textContent='▲ SURFACED '+cm.toFixed(2)+'×  +$'+win.toFixed(2)+'  — watching...';
   winEl.style.color='#00ff88';
   if(cm>sBest){sBest=cm;bestEl.textContent=cm.toFixed(2)+'×';}
   history.unshift({v:cm,w:true});
-  updateStats(win,0); addHist();
+  updateStats(win,0);addHist();
 }
 
 function doCrash(){
-  phase='crashed'; stopHB(); clearTimeout(fakeTimer);
-  surfBtn.disabled=true; isCrash=true; crashFlash=1.0;
+  phase='crashed';stopHB();clearTimeout(fakeTimer);
+  surfBtn.disabled=true;isCrash=true;crashFlash=1.0;
   multEl.className='crashed';
   setTimeout(()=>{fakeLoss();fakeLoss();},200);
   setTimeout(()=>explosion(),480);
   setTimeout(()=>{
-    ptEl.className='red'; ptEl.textContent='DEPTH CHARGE HIT';
+    ptEl.className='red';ptEl.textContent='DEPTH CHARGE HIT';
     pcEl.className='red';
     if(cashedOut){
       pcEl.textContent='CRASHED AT '+crashPt.toFixed(2)+'×  ✓ YOU WERE SAFE';
     } else {
       pcEl.textContent='CRASHED AT '+crashPt.toFixed(2)+'×';
-      winEl.textContent='LOST $'+bet.toFixed(2);
-      winEl.style.color='#ff4444';
-      history.unshift({v:crashPt,w:false});
-      updateStats(0,bet); addHist();
+      winEl.textContent='LOST $'+bet.toFixed(2);winEl.style.color='#ff4444';
+      history.unshift({v:crashPt,w:false});updateStats(0,bet);addHist();
     }
     povEl.className='visible';
     setTimeout(nextRound,3200);
   },650);
 }
 
-function nextRound(){ rNum++;rnEl.textContent=rNum;povEl.className='';startBetting(); }
+function nextRound(){rNum++;rnEl.textContent=rNum;povEl.className='';startBetting();}
 
 function addHist(){
   if(history.length>5)history.pop();
@@ -525,145 +526,29 @@ function addHist(){
   history.forEach(h=>{
     const p=document.createElement('div');
     p.className='hpill '+(h.v<2?'low':h.v<10?'mid':'high');
-    p.textContent=h.v.toFixed(2)+'×';
-    hStrip.appendChild(p);
+    p.textContent=h.v.toFixed(2)+'×';hStrip.appendChild(p);
   });
 }
-function updateWinDisp(){
-  winEl.textContent='BET $'+bet.toFixed(2)+'  →  WIN $'+(bet*mult).toFixed(2);
-  winEl.style.color='#1a8850';
-}
-
-// ══════════════════════════════════════════
-// ENEMY BEHAVIOR SYSTEM
-// ══════════════════════════════════════════
-function pickBehavior(){
-  const r=Math.random();
-  if(r<.30)return'hunt';
-  if(r<.70)return'flee';
-  return'stalk';
-}
-
-function enemyNextPosition(prog){
-  // Called once per sweep detection — returns new {angle, dist}
-  switch(eBehavior){
-
-    case 'hunt': {
-      // Deliberately moves closer to center each sweep
-      // Feels like it "locked on" and is closing in
-      eHuntSweeps++;
-      const step = 0.10 + prog*0.08; // bigger steps at high mult
-      const newDist = Math.max(0.10, eDist - step);
-      // Angle drifts slightly toward sub (center) — not perfectly straight
-      const angleAdjust = (Math.random()-0.5)*0.4;
-      // After 3-4 hunt sweeps, pick new random behavior
-      if(eHuntSweeps>=3+Math.floor(Math.random()*2)){
-        eBehavior=pickBehavior(); eHuntSweeps=0;
-      }
-      return{ angle:eAngle+angleAdjust, dist:newDist };
-    }
-
-    case 'flee': {
-      // Appears to be heading toward center — then jumps far away
-      // Creates "I tricked it / got lucky" feeling
-      // First sweep of flee: show near center
-      // Second sweep: jump far away and pick new behavior
-      if(eHuntSweeps===0){
-        // First appearance: show relatively close — alarm!
-        eHuntSweeps=1;
-        creak(); // sound for drama
-        return{ angle:eAngle+(Math.random()-0.5)*0.6, dist:0.15+Math.random()*0.20 };
-      } else {
-        // Second appearance: relief — it went somewhere else entirely
-        eBehavior=pickBehavior(); eHuntSweeps=0;
-        const fleeAngle=eAngle+Math.PI*(0.6+Math.random()*0.8); // opposite direction
-        return{ angle:fleeAngle, dist:0.55+Math.random()*0.30 };
-      }
-    }
-
-    case 'stalk': {
-      // Slow, barely noticeable approach — most sinister
-      // Small step each sweep, slight angle wander
-      const step = 0.04 + prog*0.04 + Math.random()*0.04;
-      const newDist = Math.max(0.18, eDist - step);
-      const wander = (Math.random()-0.5)*0.9; // wanders but trends inward
-      // Occasionally switch behavior after long stalk
-      if(Math.random()<0.15){ eBehavior=pickBehavior(); eHuntSweeps=0; }
-      return{ angle:eAngle+wander, dist:newDist };
-    }
-  }
-}
-
-function updateEnemy(){
-  ePulse+=.07;
-
-  // Crash: drift slowly toward near-center, stay visible
-  if(isCrash){
-    const tx=Math.cos(eAngle+.4)*0.05, ty=Math.sin(eAngle+.4)*0.05;
-    const ex=Math.cos(eAngle)*eDist, ey=Math.sin(eAngle)*eDist;
-    const nx=ex+(tx-ex)*.012, ny=ey+(ty-ey)*.012;
-    eDist=Math.sqrt(nx*nx+ny*ny); eAngle=Math.atan2(ny,nx);
-    eVisible=true; eTimer=99; return;
-  }
-  if(phase!=='active')return;
-
-  const prog=Math.min((mult-1)/12,1);
-
-  // Detect sweep passing over enemy
-  const eN=((eAngle%(Math.PI*2))+Math.PI*2)%(Math.PI*2);
-  const sN=((sweepA%(Math.PI*2))+Math.PI*2)%(Math.PI*2);
-  const dA=Math.min(Math.abs(sN-eN),Math.PI*2-Math.abs(sN-eN));
-
-  if(dA<.14&&!detected){
-    detected=true;
-    eVisible=true; eTimer=26+Math.floor(prog*28);
-    ping();
-
-    // Near miss: if crash imminent, override behavior and appear very close
-    const sweepPeriod=(Math.PI*2)/getSweepSpeed()/60;
-    const timeLeft=(crashPt-mult)/(mult*0.046*speedMult+0.001);
-    if(timeLeft<sweepPeriod*2.2&&crashPt>1.05){
-      // Force near-center appearance
-      eAngle=eAngle+(Math.random()-.5)*.6;
-      eDist=.06+Math.random()*.16;
-      creak();
-    } else {
-      // Normal behavior-driven teleport
-      const next=enemyNextPosition(prog);
-      eAngle=next.angle; eDist=next.dist;
-    }
-  } else if(dA>.5){
-    detected=false;
-  }
-
-  if(eTimer>0){ eTimer--; if(eTimer<=0)eVisible=false; }
-}
+function updateWinDisp(){winEl.textContent='BET $'+bet.toFixed(2)+'  →  WIN $'+(bet*mult).toFixed(2);winEl.style.color='#1a8850';}
 
 // ══════════════════════════════════════════
 // MAIN LOOP
 // ══════════════════════════════════════════
 function loop(ts){
   if(phase!=='active'&&phase!=='crashed')return;
-
   if(phase==='active'){
-    const el=(ts-t0)/1000;
-    mult=calcMult(el);
-    if(mult>=crashPt){
-      mult=crashPt; multEl.textContent=mult.toFixed(2)+'×';
-      doCrash(); requestAnimationFrame(loop); return;
-    }
+    const el=(ts-t0)/1000;mult=calcMult(el);
+    if(mult>=crashPt){mult=crashPt;multEl.textContent=mult.toFixed(2)+'×';doCrash();requestAnimationFrame(loop);return;}
     if(soundOn&&AC)updateHB(getBPM());
     sweepA+=getSweepSpeed();
-    const[cls]=getMultColor();
-    multEl.className=cls; multEl.textContent=mult.toFixed(2)+'×';
+    const[cls]=getMultColor();multEl.className=cls;multEl.textContent=mult.toFixed(2)+'×';
     if(!cashedOut)updateWinDisp();
     const aVal=parseFloat(document.getElementById('auto-input').value);
     if(!isNaN(aVal)&&aVal>=1.01&&mult>=aVal)doSurface();
   }
   if(phase==='crashed')sweepA+=.017;
   if(crashFlash>0)crashFlash-=.028;
-  updateEnemy(); draw();
-  requestAnimationFrame(loop);
+  updateEnemy();draw();requestAnimationFrame(loop);
 }
 
 // ══════════════════════════════════════════
@@ -673,6 +558,7 @@ function draw(){
   const W=cv.width,H=cv.height,cx=W/2,cy=H/2,R=W*.47;
   rc.clearRect(0,0,W,H);
 
+  // Background — darkens with depth
   const dark=getRadarDark();
   const bg=rc.createRadialGradient(cx,cy,0,cx,cy,R);
   bg.addColorStop(0,`rgba(${Math.floor(13*(1-dark*.6))},${Math.floor(51*(1-dark*.7))},${Math.floor(32*(1-dark*.6))},1)`);
@@ -680,13 +566,19 @@ function draw(){
   bg.addColorStop(1,`rgba(4,${Math.floor(13*(1-dark*.4))},10,1)`);
   rc.beginPath();rc.arc(cx,cy,R,0,Math.PI*2);rc.fillStyle=bg;rc.fill();
 
-  if(crashFlash>0){
-    rc.beginPath();rc.arc(cx,cy,R,0,Math.PI*2);
-    rc.fillStyle=`rgba(255,0,0,${crashFlash*.65})`;rc.fill();
-  }
+  if(crashFlash>0){rc.beginPath();rc.arc(cx,cy,R,0,Math.PI*2);rc.fillStyle=`rgba(255,0,0,${crashFlash*.65})`;rc.fill();}
 
   rc.save();rc.beginPath();rc.arc(cx,cy,R,0,Math.PI*2);rc.clip();
 
+  // Zone rings — subtle visual indicators of the 3 zones
+  const zoneColors=['rgba(255,68,68,0.06)','rgba(255,150,0,0.04)','rgba(255,220,0,0.02)'];
+  const zoneDists=[ZONE[1].max,ZONE[2].max,ZONE[3].max];
+  zoneDists.forEach((zd,i)=>{
+    rc.beginPath();rc.arc(cx,cy,R*zd,0,Math.PI*2);
+    rc.strokeStyle=zoneColors[i];rc.lineWidth=1;rc.stroke();
+  });
+
+  // Grid lines
   [.25,.5,.75,1].forEach(r=>{
     rc.beginPath();rc.arc(cx,cy,R*r,0,Math.PI*2);
     rc.strokeStyle='#0a2e1a';rc.lineWidth=.5;rc.stroke();
@@ -697,6 +589,7 @@ function draw(){
     rc.strokeStyle='#0a2e1a';rc.lineWidth=.5;rc.stroke();
   }
 
+  // Sweep trail
   const[,rgb]=getMultColor();
   for(let i=0;i<32;i++){
     const t=i/32,ta=sweepA-Math.PI*.45*t;
@@ -707,60 +600,52 @@ function draw(){
   rc.lineTo(cx+Math.cos(sweepA)*R,cy+Math.sin(sweepA)*R);
   rc.strokeStyle=`rgba(${rgb},.85)`;rc.lineWidth=1.5;rc.stroke();
 
+  // Enemy dot — visible only when sweep passed over it
   if(eVisible){
     const ex=cx+Math.cos(eAngle)*R*eDist;
     const ey=cy+Math.sin(eAngle)*R*eDist;
-    const alpha=isCrash?1.0:Math.min(eTimer/24,1.0);
+    const maxTimer=eZone===1?58:eZone===2?42:28;
+    const alpha=isCrash?1.0:Math.min(eTimer/maxTimer,1.0);
     const pulse=1+Math.sin(ePulse)*.28;
-    rc.beginPath();rc.arc(ex,ey,14*pulse,0,Math.PI*2);
-    rc.strokeStyle=`rgba(255,68,68,${alpha*.18})`;rc.lineWidth=1;rc.stroke();
-    rc.beginPath();rc.arc(ex,ey,8*pulse,0,Math.PI*2);
-    rc.strokeStyle=`rgba(255,68,68,${alpha*.45})`;rc.lineWidth=1;rc.stroke();
-    rc.beginPath();rc.arc(ex,ey,4,0,Math.PI*2);
+
+    // Zone 1 (near) = brighter, bigger pulse — more alarming
+    const baseSize=eZone===1?5:eZone===2?4:3.5;
+    rc.beginPath();rc.arc(ex,ey,16*pulse,0,Math.PI*2);
+    rc.strokeStyle=`rgba(255,68,68,${alpha*.15})`;rc.lineWidth=1;rc.stroke();
+    rc.beginPath();rc.arc(ex,ey,9*pulse,0,Math.PI*2);
+    rc.strokeStyle=`rgba(255,68,68,${alpha*.40})`;rc.lineWidth=1;rc.stroke();
+    rc.beginPath();rc.arc(ex,ey,baseSize,0,Math.PI*2);
     rc.fillStyle=`rgba(255,68,68,${alpha})`;rc.fill();
 
-    // Behavior indicator: tiny directional hint
-    // hunt = faint line toward center, stalk = none, flee = none
-    if(eBehavior==='hunt'&&!isCrash&&alpha>.5){
+    // Hunt behavior: faint arrow toward center
+    if(eBehav==='hunt'&&!isCrash&&alpha>.5&&eZone>1){
       rc.beginPath();rc.moveTo(ex,ey);
-      const dx=(cx-ex)*.3,dy=(cy-ey)*.3;
-      rc.lineTo(ex+dx,ey+dy);
-      rc.strokeStyle=`rgba(255,100,100,${alpha*.3})`;rc.lineWidth=1;rc.stroke();
+      rc.lineTo(ex+(cx-ex)*.25,ey+(cy-ey)*.25);
+      rc.strokeStyle=`rgba(255,100,100,${alpha*.25})`;rc.lineWidth=1;rc.stroke();
     }
   }
 
+  // Center submarine
   rc.beginPath();rc.arc(cx,cy,5,0,Math.PI*2);rc.fillStyle='#00ff88';rc.fill();
-  rc.beginPath();rc.arc(cx,cy,11,0,Math.PI*2);
-  rc.strokeStyle='rgba(0,255,136,.28)';rc.lineWidth=1;rc.stroke();
+  rc.beginPath();rc.arc(cx,cy,11,0,Math.PI*2);rc.strokeStyle='rgba(0,255,136,.28)';rc.lineWidth=1;rc.stroke();
 
   rc.restore();
-  rc.beginPath();rc.arc(cx,cy,R,0,Math.PI*2);
-  rc.strokeStyle='#0d4020';rc.lineWidth=1;rc.stroke();
+  rc.beginPath();rc.arc(cx,cy,R,0,Math.PI*2);rc.strokeStyle='#0d4020';rc.lineWidth=1;rc.stroke();
 }
 
 // ══════════════════════════════════════════
 // CONTROLS
 // ══════════════════════════════════════════
-document.getElementById('bet-dn').addEventListener('click',()=>{
-  if(phase!=='betting')return;
-  if(bIdx>0)bIdx--;bet=BETS[bIdx];betEl.textContent='$'+bet.toFixed(2);updateWinDisp();
-});
-document.getElementById('bet-up').addEventListener('click',()=>{
-  if(phase!=='betting')return;
-  if(bIdx<BETS.length-1)bIdx++;bet=BETS[bIdx];betEl.textContent='$'+bet.toFixed(2);updateWinDisp();
-});
+document.getElementById('bet-dn').addEventListener('click',()=>{if(phase!=='betting')return;if(bIdx>0)bIdx--;bet=BETS[bIdx];betEl.textContent='$'+bet.toFixed(2);updateWinDisp();});
+document.getElementById('bet-up').addEventListener('click',()=>{if(phase!=='betting')return;if(bIdx<BETS.length-1)bIdx++;bet=BETS[bIdx];betEl.textContent='$'+bet.toFixed(2);updateWinDisp();});
 surfBtn.addEventListener('click',doSurface);
-document.addEventListener('keydown',e=>{ if(e.code==='Space'){e.preventDefault();doSurface();} });
+document.addEventListener('keydown',e=>{if(e.code==='Space'){e.preventDefault();doSurface();}});
 document.getElementById('sound-toggle').addEventListener('click',function(){
-  ensureAC();soundOn=!soundOn;
-  this.textContent=soundOn?'♪ ON':'♪ OFF';
-  this.className=soundOn?'on':'';
+  ensureAC();soundOn=!soundOn;this.textContent=soundOn?'♪ ON':'♪ OFF';this.className=soundOn?'on':'';
   if(!soundOn)stopHB();else if(phase==='active')startHB(getBPM());
 });
 document.getElementById('start-btn').addEventListener('click',()=>{
-  ensureAC();
-  document.getElementById('start-overlay').style.display='none';
-  resize();draw();startBetting();
+  ensureAC();document.getElementById('start-overlay').style.display='none';resize();draw();startBetting();
 });
 </script>
 </body>
